@@ -9,3 +9,11 @@
  * 同时需要在服务端配置 COPILOT_CORS_ORIGIN 允许该站点跨域。
  */
 window.__COPILOT_RUNTIME_URL__ = '/api/copilotkit';
+
+/**
+ * DeepSeek 对话页（/ai-chat）的接口地址，规则同上：
+ * - 开发环境：CRA devServer 代理到 127.0.0.1:8300
+ * - 生产环境：Nginx 反代到 DeepSeek 代理服务
+ * 跨域独立部署时改成绝对地址，并在服务端配置 DEEPSEEK_CORS_ORIGIN。
+ */
+window.__DEEPSEEK_API_URL__ = '/api/deepseek';

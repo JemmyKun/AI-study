@@ -10,6 +10,7 @@
 
 # production
 /build
+/build-verify
 
 # misc
 .DS_Store
@@ -20,6 +21,11 @@
 .env.production.local
 
 .dev.log
+.deepseek.log
+.deepseek.err.log
+.launch.log
+.build.log
+/.backup
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

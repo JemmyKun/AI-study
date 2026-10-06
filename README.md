@@ -1,46 +1,65 @@
-# Getting Started with Create React App
+# 智枢 · 智能业务平台
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+低代码表单 + 资金结算 + AI 助手的一体化前端工程。基于 Create React App（craco）与 antd v4，
+内置两套 AI 能力：**CopilotKit Agent（可操作页面）** 与 **DeepSeek 对话（流式 + 思维链）**。
 
-## Available Scripts
+## 特性
 
-In the project directory, you can run:
+- 低代码表单：拖拽设计器 + Schema 驱动渲染 + 字段联动与校验
+- 资金结算池：状态流转、金额统计、结算单录入
+- AI 助手：CopilotKit 前端工具可读取并操作业务模块；DeepSeek 直连模型流式对话
+- 工程规范：分层目录、集中路由、统一请求封装、国际化、一键启停脚本
 
-### `npm start`
+## 快速开始
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+```bash
+npm install
+cp .env.example .env      # 填写模型密钥（DEEPSEEK_API_KEY 或 MODEL_API_KEY）
+npm run launch            # 前端 3000 + Runtime 8200 + DeepSeek 代理 8300
+```
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+打开 http://localhost:3000 ，停止服务执行 `npm run stop`。
+详见 [docs/01-快速开始](./docs/01-getting-started.md)。
 
-### `npm test`
+## 目录速览
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```
+src/
+├─ app/         应用装配与全局 Provider
+├─ pages/       页面（一个目录一个路由）
+├─ layouts/     导航、路由出口、全局 AI 助手
+├─ features/    业务领域能力（copilot、form）
+├─ components/  通用组件（form-renderer 等）
+├─ hooks/       跨页面复用的通用 Hook
+├─ services/    接口层（http / sse / deepseek）
+├─ constants/   路由与导航常量
+├─ config/      运行时配置出口（含主题唯一来源 theme.js）
+├─ locales/     国际化（业务文案 + antd/dayjs 语言）
+├─ router/      路由表
+├─ styles/      全局样式与变量
+└─ types/ utils/ 共享类型与工具
+```
 
-### `npm run build`
+## 常用脚本
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+| 命令 | 说明 |
+| --- | --- |
+| `npm run launch` | 一键启动前端 + Runtime + DeepSeek 代理 |
+| `npm run stop` | 停止全部服务 |
+| `npm start` | 仅启动前端 |
+| `npm run build` | 生产构建到 `build/` |
+| `npm test` | 运行测试 |
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 技术栈
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+React 18 · TypeScript · CRA + craco · antd 4 · React Router 7 · CopilotKit · Less
 
-### `npm run eject`
+## 文档
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+- [文档索引](./docs/README.md)
+- [项目结构](./docs/02-project-structure.md)
+- [开发规范](./docs/03-conventions.md)
+- [架构说明](./docs/04-architecture.md)
+- [接口与服务](./docs/05-api-services.md)
+- [国际化](./docs/06-i18n.md)
+- [部署](./docs/07-deploy.md)

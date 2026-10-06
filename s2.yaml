@@ -1,0 +1,87 @@
+- generic [ref=f1e2]:
+  - banner [ref=f1e3]:
+    - link "智 智枢 · 智能业务平台" [ref=f1e4] [cursor=pointer]:
+      - /url: /
+      - generic [ref=f1e5]: 智
+      - generic [ref=f1e6]: 智枢 · 智能业务平台
+    - menu [ref=f1e7]:
+      - menuitem [ref=f1e8] [cursor=pointer]:
+        - img "home" [ref=f1e9]
+        - link "首页" [ref=f1e13]:
+          - /url: /
+      - menuitem [ref=f1e14] [cursor=pointer]:
+        - img "appstore" [ref=f1e15]
+        - link "表单设计器" [ref=f1e19]:
+          - /url: /builder
+      - menuitem [ref=f1e20] [cursor=pointer]:
+        - img "appstore" [ref=f1e21]
+        - link "表单渲染演示" [ref=f1e25]:
+          - /url: /renderer
+      - menuitem [ref=f1e26] [cursor=pointer]:
+        - img "wallet" [ref=f1e27]
+        - link "资金结算池" [ref=f1e31]:
+          - /url: /settle-pool
+      - menuitem [disabled]
+    - generic [ref=f1e32]:
+      - generic [ref=f1e33]: AI 助手
+      - generic [ref=f1e34]:
+        - link "message AI 问答" [ref=f1e35] [cursor=pointer]:
+          - /url: /chat
+          - img "message" [ref=f1e36]
+          - generic [ref=f1e39]: AI 问答
+        - link "robot DeepSeek 对话" [ref=f1e40] [cursor=pointer]:
+          - /url: /ai-chat
+          - img "robot" [ref=f1e41]
+          - generic [ref=f1e44]: DeepSeek 对话
+    - generic [ref=f1e46] [cursor=pointer]:
+      - combobox [ref=f1e48]
+      - generic "简体中文" [ref=f1e49]
+  - generic [ref=f1e66]:
+    - paragraph [ref=f1e67]: 全新升级：支持流式输出与 R1 深度思考（思维链），欢迎体验并反馈 →
+    - heading "探索未至之境" [level=1] [ref=f1e68]
+    - generic [ref=f1e69]:
+      - generic [ref=f1e70]:
+        - textbox "给 DeepSeek 发送消息…" [active] [ref=f1e71]: 简述 TypeScript 泛型的用法
+        - generic [ref=f1e72]:
+          - generic [ref=f1e73]:
+            - button "V3 对话" [ref=f1e74] [cursor=pointer]
+            - button "深度思考" [ref=f1e75] [cursor=pointer]
+          - button [disabled] [ref=f1e77]:
+            - img "arrow-up" [ref=f1e78]
+      - paragraph [ref=f1e81]: 内容由 DeepSeek 生成，可能存在错误，请酌情参考
+    - generic [ref=f1e82]:
+      - button [ref=f1e83] [cursor=pointer]:
+        - img "message" [ref=f1e84]
+        - text: 用一句话解释什么是 HTTP 缓存
+      - button [ref=f1e87] [cursor=pointer]:
+        - img "message" [ref=f1e88]
+        - text: 帮我写一个 TypeScript 防抖函数，并说明用法
+      - button [ref=f1e91] [cursor=pointer]:
+        - img "message" [ref=f1e92]
+        - text: 把下面这段需求拆成任务清单：搭建一个报表导出功能
+      - button [ref=f1e95] [cursor=pointer]:
+        - img "message" [ref=f1e96]
+        - text: 介绍一下 React 的并发渲染
+  - generic [ref=f1e57]:
+    - complementary [aria-hidden]:
+      - generic:
+        - generic:
+          - generic:
+            - generic: AI 助手
+            - generic:
+              - button
+        - generic:
+          - generic:
+            - generic:
+              - generic:
+                - heading [level=1]: AI 您好，我是 AI 助手，可以帮您查看和操作各业务模块（如表单配置、结算池：统计状态与金额、检索结算单、打开编辑页）。
+              - generic:
+                - generic:
+                  - generic:
+                    - generic:
+                      - generic [ref=f1e60]:
+                        - textbox [ref=f1e62]:
+                          - /placeholder: 输入消息…
+                        - generic [ref=f1e64]:
+                          - button [disabled]
+                      - generic: AI 生成内容可能存在错误，请核实重要信息。

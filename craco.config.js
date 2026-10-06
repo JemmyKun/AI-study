@@ -1,6 +1,8 @@
 const CracoLessPlugin = require('craco-less');
+const { ANTD_LESS_VARS } = require('./src/config/theme');
 
 module.exports = {
+
   // 开发环境把 /api/copilotkit 代理到本地 Runtime，
   // 这样前端开发和生产都使用同源相对地址，无需 CORS、无需硬编码端口
   devServer: {
@@ -23,6 +25,8 @@ module.exports = {
         lessLoaderOptions: {
           lessOptions: {
             javascriptEnabled: true,
+            // antd v4 主题定制：唯一来源是 src/config/theme.js，改主题只改那里
+            modifyVars: ANTD_LESS_VARS,
           },
         },
       },

@@ -1,0 +1,192 @@
+/* AI 助手侧边栏（CopilotSidebar）与全站导航对齐
+ * - 侧栏整体占满视口高度（100dvh），从顶部开始铺满
+ * - 侧栏自带 header 默认约 65px，统一到 --app-nav-height，与 AppNav 视觉平齐
+ */
+
+.copilotKitSidebar.copilotKitWindow {
+  top: 0 !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  box-shadow: -2px 0 12px rgba(0, 0, 0, 0.08);
+}
+
+.copilotKitHeader {
+  height: var(--app-nav-height) !important;
+  min-height: var(--app-nav-height) !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* ---------- 对话区 ---------- */
+
+/* 空状态欢迎语：由"居中特大标题"改为左对齐的常规欢迎文案 */
+.copilotKitChat div:has(> h1) {
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  /* 欢迎语整体下移：默认顶在导航条下方显得局促 */
+  padding-top: 128px !important;
+}
+
+/* 欢迎语：整段长句按"提示卡片"呈现，弱化标题感、增强可读性 */
+.copilotKitChat h1 {
+  position: relative;
+  margin: 0 !important;
+  max-width: 94% !important;
+  padding: 14px 16px 14px 54px !important;
+  font-size: 0.9375rem !important;
+  line-height: 1.9 !important;
+  font-weight: 400 !important;
+  text-align: left !important;
+  color: #4a5468 !important;
+  background: #f7f9fc;
+  border: 1px solid #eef1f7;
+  border-radius: 4px 16px 16px 16px;
+}
+
+/* 左侧 AI 徽标：纯装饰，不占 DOM */
+.copilotKitChat h1::before {
+  content: 'AI';
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #4d6bfe, #6ea8ff);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(77, 107, 254, 0.25);
+}
+
+/* 消息列表：收紧消息间距（默认 pt-10 过于稀疏） */
+.copilotKitMessages {
+  gap: 4px !important;
+}
+
+.copilotKitMessage {
+  padding-top: 12px !important;
+}
+
+/* 用户消息：浅蓝气泡，与 /ai-chat 页一致 */
+.copilotKitUserMessage div[class*='prose'] {
+  background: #e8f0fe !important;
+  color: #1f2430 !important;
+  border-radius: 16px 16px 4px 16px !important;
+  padding: 9px 14px !important;
+  font-size: 0.9375rem !important;
+  line-height: 1.7 !important;
+}
+
+/* 助手消息：无气泡直接排版，字号行距收敛 */
+.copilotKitAssistantMessage div[class*='prose'] {
+  font-size: 0.9375rem !important;
+  line-height: 1.75 !important;
+  color: #262a3c !important;
+}
+
+.copilotKitAssistantMessage div[class*='prose'] p {
+  margin: 0 0 10px !important;
+}
+
+.copilotKitAssistantMessage div[class*='prose'] :is(ul, ol) {
+  margin: 4px 0 10px !important;
+}
+
+.copilotKitAssistantMessage div[class*='prose'] li {
+  margin: 2px 0 !important;
+  padding: 0 !important;
+}
+
+/* 消息工具按钮（复制等）：弱化为灰色小图标 */
+.copilotKitMessage button {
+  color: #8a93a8 !important;
+}
+
+.copilotKitMessage button:hover {
+  background: #f2f4f8 !important;
+  color: #4d6bfe !important;
+}
+
+/* ---------- 输入框 ---------- */
+
+/* 输入区加宽：去掉侧栏里的大留白，让卡片占满可用宽度 */
+.copilotKitChat div[class*='max-w-3xl'] {
+  max-width: 100% !important;
+}
+
+.copilotKitChat div[class*='px-8'],
+.copilotKitChat div[class*='px-4'] {
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+.copilotKitInput div[class*='px-3'] {
+  padding-left: 10px !important;
+  padding-right: 10px !important;
+}
+
+/* 输入卡片：圆角描边 + 轻阴影，替代默认大胶囊 */
+.copilotKitInput {
+  border: 1px solid #e3e8f2 !important;
+  border-radius: 18px !important;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06) !important;
+}
+
+.copilotKitInput textarea {
+  font-size: 0.9375rem !important;
+  line-height: 1.6 !important;
+}
+
+/* "+"（add menu）按钮：CopilotKit 在没有 onAddFile / toolsMenu 时会把它置为 disabled，
+ * 本项目未接入文件上传与工具菜单，且侧栏会话与外部 useAgent 不在同一 thread（无法注入上下文），
+ * 因此隐藏该按钮并把首列宽度收为 0，避免"点不动"的误导。 */
+.copilotKitInput div[class*='col-start-1'] {
+  display: none !important;
+}
+
+.copilotKitInput div[class*='grid-cols-'] {
+  grid-template-columns: 0 minmax(0, 1fr) auto !important;
+  column-gap: 0 !important;
+}
+
+/* 发送按钮：默认黑圆改为品牌蓝，禁用态置灰 */
+.copilotKitInput div[class*='col-start-3'] button {
+  background: #4d6bfe !important;
+  color: #fff !important;
+}
+
+.copilotKitInput div[class*='col-start-3'] button:hover {
+  background: #3d5bf0 !important;
+}
+
+.copilotKitInput div[class*='col-start-3'] button:disabled {
+  background: #e3e8f2 !important;
+  color: #9aa4b8 !important;
+}
+
+/* 免责声明：减小上下留白 */
+.copilotKitChat div[class*='text-muted-foreground'] {
+  padding-top: 6px !important;
+  padding-bottom: 8px !important;
+}
+
+/* 侧栏滚动条细化 */
+.copilotKitChat ::-webkit-scrollbar {
+  width: 6px;
+}
+
+.copilotKitChat ::-webkit-scrollbar-thumb {
+  background: #d9dee9;
+  border-radius: 3px;
+}
+
+.copilotKitChat ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
