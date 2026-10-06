@@ -1,33 +1,51 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useLocale, type Translate } from '../../locales';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiError, deepseekApi } from '../../services';
 import { createId } from '../../utils';
-import { ApiMessage, ChatMessage, DEFAULT_MODEL, HealthInfo, ServiceStatus } from './types';
+import { composeAttachmentText } from './attachments';
+import { ApiMessage, Attachment, ChatMessage, DEFAULT_MODEL, HealthInfo, ServiceStatus } from './types';
 
-/** 把 UI 消息压缩成发给模型的上下文：丢弃空内容与失败回复 */
+/**
+ * 单条消息真正发给模型的内容：正文 + 可读文本附件的内容。
+ * 只挂了图片/二进制而没打字时，至少把文件名告诉模型，避免发出空 content。
+ */
+function buildApiContent(m: ChatMessage): string {
+  const text = m.content.trim();
+  const injected = composeAttachmentText(m.attachments ?? []);
+  if (text || injected) return text + injected;
+
+  const names = (m.attachments ?? []).map(a => a.name);
+  return names.length ? `（用户上传了文件：${names.join('、')}）` : '';
+}
+
+/** 把 UI 消息压缩成发给模型的上下文：丢弃失败回复与空内容 */
 function toApiMessages(messages: ChatMessage[]): ApiMessage[] {
   return messages
-    .filter(m => !m.failed && m.content.trim())
-    .map(m => ({ role: m.role, content: m.content }));
+    .filter(m => !m.failed)
+    .map(m => ({ role: m.role, content: buildApiContent(m) }))
+    .filter(m => m.content.trim());
 }
 
 /** 把底层错误翻译成用户能看懂的提示 */
-function friendlyError(err: unknown, t: Translate): string {
-  if (err instanceof ApiError && err.isNetworkError) return t('deepseek.error.offline');
+function friendlyError(err: unknown): string {
+  const offline = '无法连接后端代理，请确认已启动服务（npm run launch）。';
+  if (err instanceof ApiError && err.isNetworkError) return offline;
 
   const raw = err instanceof Error ? err.message : String(err ?? '');
-  if (/api key|401|403|密钥|key/i.test(raw)) return t('deepseek.error.invalidKey');
-  if (/Failed to fetch|fetch failed|NetworkError|ECONNREFUSED|network|超时/i.test(raw)) {
-    return t('deepseek.error.offline');
+  if (/api key|401|403|密钥|key/i.test(raw)) {
+    return '模型密钥无效或未配置，请在 .env 中填写 DEEPSEEK_API_KEY 后重启服务。';
   }
-  return raw || t('deepseek.error.generic');
+  if (/Failed to fetch|fetch failed|NetworkError|ECONNREFUSED|network|超时/i.test(raw)) {
+    return offline;
+  }
+  return raw || '生成失败，请重试。';
 }
 
-const STATUS_TEXT_KEY: Record<ServiceStatus, string> = {
-  checking: 'deepseek.status.checking',
-  ready: 'deepseek.status.ready',
-  unconfigured: 'deepseek.status.unconfigured',
-  offline: 'deepseek.status.offline',
+/** 状态灯文案 */
+const STATUS_TEXT: Record<ServiceStatus, string> = {
+  checking: '检测中…',
+  ready: '已就绪',
+  unconfigured: '未配置密钥',
+  offline: '未连接',
 };
 
 /**
@@ -37,7 +55,6 @@ const STATUS_TEXT_KEY: Record<ServiceStatus, string> = {
  * - 用 requestAnimationFrame 合并渲染，避免每个 token 都触发一次 React 更新
  */
 export function useDeepSeekChat() {
-  const { t } = useLocale();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setStreaming] = useState(false);
   const [status, setStatus] = useState<ServiceStatus>('checking');
@@ -148,7 +165,7 @@ export function useDeepSeekChat() {
             commit(assistantId, '', '', true);
           }
         } else {
-          setError(friendlyError(err, t));
+          setError(friendlyError(err));
           commit(assistantId, content, reasoning, content.trim() === '', thoughtMs);
         }
       } finally {
@@ -167,19 +184,19 @@ export function useDeepSeekChat() {
         abortRef.current = null;
       }
     },
-    [commit, t],
+    [commit],
   );
 
   const send = useCallback(
-    (text: string, images?: string[]) => {
+    (text: string, attachments?: Attachment[]) => {
       const content = text.trim();
-      if ((!content && !images?.length) || isStreaming) return;
+      if ((!content && !attachments?.length) || isStreaming) return;
 
       const userMsg: ChatMessage = {
         id: createId('user'),
         role: 'user',
         content,
-        images: images?.length ? images : undefined,
+        attachments: attachments?.length ? attachments : undefined,
         createdAt: Date.now(),
       };
       const assistantId = createId('assistant');
@@ -230,7 +247,7 @@ export function useDeepSeekChat() {
     void runStream(history, assistantId, model);
   }, [isStreaming, model, runStream]);
 
-  const statusText = useMemo(() => t(STATUS_TEXT_KEY[status]), [status, t]);
+  const statusText = STATUS_TEXT[status];
 
   return {
     messages,

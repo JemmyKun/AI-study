@@ -52,11 +52,6 @@ src/
 │  ├─ AppLayout/         # 整体框架（导航 + 内容区）
 │  ├─ AppNav/            # 顶部导航
 │  └─ AssistantDock/     # 悬浮助手开关
-├─ locales/              # 国际化
-│  ├─ messages/          # zh-CN.ts（源字典）、en-US.ts（必须全量覆盖）
-│  ├─ antd.ts            # 业务语言 → antd 语言包映射
-│  ├─ dayjs.ts           # dayjs 全局语言同步（日期面板的月份/星期）
-│  └─ index.tsx          # LocaleProvider、useLocale
 ├─ pages/                # 页面：一个路由一个目录，私有组件/hook/样式就近存放
 │  ├─ home/              # 首页
 │  ├─ form-builder/      # 表单设计器（调色板、画布、属性、联动、预览）
@@ -84,14 +79,14 @@ src/
 
 | 层 | 职责 | 允许依赖 | 禁止 |
 | --- | --- | --- | --- |
-| `app/` | 组合 Provider、挂载根组件 | `layouts`、`locales`、`config`、`router` | 写业务逻辑 |
-| `layouts/` | 导航、路由出口、全局助手等框架能力 | `pages`、`features`、`constants`、`locales` | 写具体业务规则 |
+| `app/` | 组合 Provider、挂载根组件 | `layouts`、`config`、`router` | 写业务逻辑 |
+| `layouts/` | 导航、路由出口、全局助手等框架能力 | `pages`、`features`、`constants` | 写具体业务规则 |
 | `pages/` | 一个路由对应一个目录，页面私有组件/hook/样式就近存放 | `components`、`features`、`hooks`、`services`、`constants` | 跨页面互相 import |
 | `features/` | 按领域聚合的能力（注册表、引擎、桥接） | `types`、`utils` | 依赖 `pages` |
 | `components/` | 无业务语义的可复用 UI | `types`、`utils`、`hooks` | 依赖 `pages`、`features` |
 | `hooks/` | 跨页面复用的自定义 Hook | `types`、`utils` | 依赖 `pages`、`features`、`services` |
 | `services/` | 接口访问与数据转换 | `config` | 直接操作 DOM / 引入组件 |
-| `constants/` | 纯数据与常量 | `locales` 的类型 | 写副作用 |
+| `constants/` | 纯数据与常量 | `config`、`types` | 写副作用 |
 | `config/` | 环境变量、运行时配置、主题的唯一出口 | — | 散落的 `process.env` |
 
 ## 4. 新代码放哪里
@@ -105,7 +100,7 @@ src/
 | 某个业务领域的能力（规则引擎、注册表） | `src/features/<领域>/` |
 | 新的后端接口调用 | `src/services/` |
 | 新的路径/菜单项 | `src/constants/routes.ts`、`src/constants/nav.ts` |
-| 新的文案 | `src/locales/messages/zh-CN.ts`（同步 `en-US.ts`） |
+| 新的文案 | 直接写在组件内（本项目固定简体中文，不设字典） |
 | 跨页面共享类型 | `src/types/` |
 
 > 判断口诀：**能被别的页面复用就上提一层，只服务当前页面就留在页面目录内。**
@@ -114,7 +109,7 @@ src/
 
 提供 `index.ts` 的目录（跨层引用一律走桶文件）：
 
-`components`、`features`、`hooks`、`layouts`、`config`、`constants`、`locales`、`router`、`services`、`types`、`utils`
+`components`、`features`、`hooks`、`layouts`、`config`、`constants`、`router`、`services`、`types`、`utils`
 
 不提供桶文件的目录：
 

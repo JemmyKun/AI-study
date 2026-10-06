@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 export interface Message {
   id: string;
@@ -52,7 +52,7 @@ function CodeBlock({
         </button>
       </div>
       <SyntaxHighlighter
-        style={vscDarkPlus}
+        style={oneLight}
         language={match ? match[1] : 'text'}
         PreTag="div"
         customStyle={{

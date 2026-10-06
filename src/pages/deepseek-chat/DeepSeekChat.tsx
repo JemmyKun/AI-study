@@ -1,23 +1,20 @@
 import React, { useRef, useState } from 'react';
 import { MessageOutlined } from '@ant-design/icons';
-import { useLocale } from '../../locales';
-import type { MessageKey } from '../../locales/messages/zh-CN';
 import InputBox from './InputBox';
 import MessageList, { ChatNotice } from './MessageList';
-import { MODEL_OPTIONS } from './types';
+import { Attachment, MODEL_OPTIONS } from './types';
 import { useDeepSeekChat } from './useDeepSeekChat';
 import './DeepSeekChat.css';
 
-/** 空状态快捷问题：只存文案 key，展示时按语言渲染 */
-const SAMPLE_KEYS: MessageKey[] = [
-  'deepseek.sample.1',
-  'deepseek.sample.2',
-  'deepseek.sample.3',
-  'deepseek.sample.4',
+/** 空状态快捷问题 */
+const SAMPLE_QUESTIONS = [
+  '用一句话解释什么是 HTTP 缓存',
+  '帮我写一个 TypeScript 防抖函数，并说明用法',
+  '把下面这段需求拆成任务清单：搭建一个报表导出功能',
+  '介绍一下 React 的并发渲染',
 ];
 
 const DeepSeekChat: React.FC = () => {
-  const { t } = useLocale();
   const {
     messages,
     isStreaming,
@@ -47,6 +44,19 @@ const DeepSeekChat: React.FC = () => {
   const scrollRef = useRef<HTMLElement>(null);
   const [atBottom, setAtBottom] = useState(true);
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
+
+  // 标题圆形滤镜：只写 CSS 变量，避免每次 mousemove 都触发 React 重渲染
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const lensRef = useRef<HTMLSpanElement>(null);
+
+  const handleTitleMove = (e: React.MouseEvent<HTMLHeadingElement>) => {
+    const title = titleRef.current;
+    const lens = lensRef.current;
+    if (!title || !lens) return;
+    const rect = title.getBoundingClientRect();
+    lens.style.setProperty('--lens-x', `${e.clientX - rect.left}px`);
+    lens.style.setProperty('--lens-y', `${e.clientY - rect.top}px`);
+  };
 
   const handleListScroll = () => {
     const el = scrollRef.current;
@@ -81,9 +91,9 @@ const DeepSeekChat: React.FC = () => {
   );
 
   /** 新提问：无论此前是否回看历史，都强制跟随到最新内容 */
-  const handleSend = (text: string, images?: string[]) => {
+  const handleSend = (text: string, attachments?: Attachment[]) => {
     setAtBottom(true);
-    send(text, images);
+    send(text, attachments);
   };
 
   const inputProps = {
@@ -107,25 +117,35 @@ const DeepSeekChat: React.FC = () => {
             onDismissError={dismissError}
             onRetryStatus={refreshStatus}
           />
-          <p className="ds-announce">{t('deepseek.announce')}</p>
-          <h1 className="ds-hero-title">{t('deepseek.hero.title')}</h1>
+          <p className="ds-announce">
+            全新升级：支持流式输出与 R1 深度思考（思维链），欢迎体验并反馈 →
+          </p>
+          <h1
+            className="ds-hero-title"
+            ref={titleRef}
+            onMouseEnter={handleTitleMove}
+            onMouseMove={handleTitleMove}
+          >
+            探索未至之境
+            {/* 圆形滤镜：整圆跟随指针，圆内反色突出当前汉字（纯装饰，对读屏隐藏） */}
+            <span className="ds-hero-magnifier" ref={lensRef} aria-hidden>
+              <span className="ds-hero-lens-text">探索未至之境</span>
+            </span>
+          </h1>
           <InputBox {...inputProps} />
           <div className="ds-quick">
-            {SAMPLE_KEYS.map(key => {
-              const question = t(key);
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  className="ds-quick-pill"
-                  disabled={isStreaming}
-                  onClick={() => send(question)}
-                >
-                  <MessageOutlined className="ds-quick-icon" />
-                  {question}
-                </button>
-              );
-            })}
+            {SAMPLE_QUESTIONS.map(question => (
+              <button
+                key={question}
+                type="button"
+                className="ds-quick-pill"
+                disabled={isStreaming}
+                onClick={() => send(question)}
+              >
+                <MessageOutlined className="ds-quick-icon" />
+                {question}
+              </button>
+            ))}
           </div>
         </div>
       ) : (
@@ -144,7 +164,7 @@ const DeepSeekChat: React.FC = () => {
 
           {/* 右侧提问记录：悬浮胶囊，点击定位到提问位置 */}
           {questions.length > 0 && (
-            <nav className="ds-outline" aria-label={t('deepseek.outline')}>
+            <nav className="ds-outline" aria-label="提问记录">
               {questions.map(q => (
                 <button
                   key={q.id}
@@ -164,7 +184,7 @@ const DeepSeekChat: React.FC = () => {
           <div className="ds-toolbar">
             <span
               className={`ds-status ds-status-${status}`}
-              title={t('deepseek.statusTip', { status: statusText })}
+              title={`服务状态：${statusText}`}
             >
               <span className="ds-dot" />
               {statusText}
@@ -174,9 +194,9 @@ const DeepSeekChat: React.FC = () => {
               className="ds-tool-btn"
               onClick={clear}
               disabled={isStreaming}
-              title={t('deepseek.clearTip')}
+              title="清空全部对话内容"
             >
-              {t('deepseek.clear')}
+              清空会话
             </button>
           </div>
 

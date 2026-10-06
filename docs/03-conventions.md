@@ -41,7 +41,7 @@
 
 - 同目录用 `./Xxx`，跨目录用相对路径，目录过深时优先调整目录而不是堆 `../`；
 - 跨层引用优先走桶文件（`import { ROUTES } from '../../constants'`）；
-- 桶文件约定：`components`、`features`、`hooks`、`layouts`、`constants`、`config`、`locales`、`router`、`services`、`types`、`utils` 均提供 `index.ts`；
+- 桶文件约定：`components`、`features`、`hooks`、`layouts`、`constants`、`config`、`router`、`services`、`types`、`utils` 均提供 `index.ts`；
   `pages/` 不提供桶文件（会把全部页面拉进主包，破坏路由懒加载），按需直接 import 具体页面；
   副作用模块（如 `features/form/registry/defaultComponents`）不进桶文件，避免"引用即注册"的隐式行为；
 - 禁止反向依赖：低层（`components`/`utils`/`types`）不得 import 高层（`pages`/`layouts`）；
@@ -55,11 +55,11 @@
 - antd 主题的唯一来源是 `src/config/theme.js`：构建期由 `craco.config.js` 的 `modifyVars` 注入，运行期通过 `UI_TOKENS` 读取（如 `componentSize`）；
   改主题只改这一个文件，不要在组件里覆盖全局变量、也不要在 craco 里另写一份。
 
-## 7. 国际化约定
+## 7. 文案约定
 
-- 界面文案禁止硬编码中文，统一用 `t('key')`；
-- 字典以 `zh-CN` 为源，`en-US` 必须覆盖全部 key（类型保证）；
-- 详见 [06-国际化](./06-i18n.md)。
+- 本项目固定使用简体中文，不做多语言切换，文案直接写在组件里，不额外抽字典；
+- antd 组件文案与 dayjs 日期文案在 `src/app/AppProviders.tsx` 一次性设定为中文（antd 默认是英文）；
+- 面向模型的文案（如 CopilotKit 工具 `description`）同样固定中文，见 `src/features/copilot/labels.ts`。
 
 ## 8. 代码提交前检查
 

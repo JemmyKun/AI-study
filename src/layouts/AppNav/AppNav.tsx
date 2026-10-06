@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Layout, Menu, Select } from 'antd';
+import { Layout, Menu } from 'antd';
 import {
   AppstoreOutlined,
   HomeOutlined,
@@ -10,7 +10,6 @@ import {
 } from '@ant-design/icons';
 import { AI_NAV_ITEMS, BUSINESS_NAV_ITEMS, ROUTES, type NavIconKey } from '../../constants';
 import { APP_INFO } from '../../config';
-import { useLocale } from '../../locales';
 import './AppNav.css';
 
 const { Header } = Layout;
@@ -28,7 +27,6 @@ const NAV_ICONS: Record<NavIconKey, React.ReactNode> = {
 /** 顶部导航：菜单项来自 constants/nav.ts，选中态由路由推导 */
 const AppNav: React.FC = () => {
   const { pathname } = useLocation();
-  const { t, locale, setLocale, availableLocales } = useLocale();
 
   const selectedKeys = useMemo(() => {
     const exact = BUSINESS_NAV_ITEMS.find(item => item.path === pathname);
@@ -45,15 +43,15 @@ const AppNav: React.FC = () => {
       BUSINESS_NAV_ITEMS.map(item => ({
         key: item.path,
         icon: NAV_ICONS[item.icon],
-        label: <Link to={item.path}>{t(item.labelKey)}</Link>,
+        label: <Link to={item.path}>{item.label}</Link>,
       })),
-    [t],
+    [],
   );
 
   return (
     <Header className="app-nav">
       {/* logo 可点击，回到首页 */}
-      <Link to={ROUTES.HOME} className="app-nav-logo" title={t('nav.home')}>
+      <Link to={ROUTES.HOME} className="app-nav-logo" title="首页">
         <span className="app-nav-logo-mark">智</span>
         <span className="app-nav-logo-text">{APP_INFO.name}</span>
       </Link>
@@ -66,33 +64,21 @@ const AppNav: React.FC = () => {
         selectedKeys={selectedKeys}
       />
 
-      {/* AI 助手独立导航区：与业务菜单视觉分离 */}
+      {/* AI 助手独立导航区：与业务菜单视觉分离。
+          不再放分组标题——胶囊文字本身已表意，重复标题反而没有信息量。 */}
       <div className="app-nav-ai">
-        <span className="app-nav-ai-label">{t('nav.group.ai')}</span>
-        <div className="app-nav-ai-group">
-          {AI_NAV_ITEMS.map(item => (
-            <Link
-              key={item.path}
-              to={item.path}
-              title={item.hintKey ? t(item.hintKey) : undefined}
-              className={`app-nav-ai-item ${pathname === item.path ? 'is-active' : ''}`}
-            >
-              {NAV_ICONS[item.icon]}
-              <span className="app-nav-ai-text">{t(item.labelKey)}</span>
-            </Link>
-          ))}
-        </div>
+        {AI_NAV_ITEMS.map(item => (
+          <Link
+            key={item.path}
+            to={item.path}
+            title={item.hint}
+            className={`app-nav-ai-item ${pathname === item.path ? 'is-active' : ''}`}
+          >
+            {NAV_ICONS[item.icon]}
+            <span className="app-nav-ai-text">{item.label}</span>
+          </Link>
+        ))}
       </div>
-
-      {/* 语言切换：业务文案与 antd 组件文案同步切换 */}
-      <Select
-        className="app-nav-locale"
-        size="small"
-        value={locale}
-        onChange={setLocale}
-        options={availableLocales.map(code => ({ value: code, label: t(`locale.${code}`) }))}
-        dropdownMatchSelectWidth={false}
-      />
     </Header>
   );
 };

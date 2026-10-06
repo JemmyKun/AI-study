@@ -50,7 +50,7 @@ const AI_MODULES: ModuleCard[] = [
   {
     to: ROUTES.CHAT,
     icon: <MessageOutlined />,
-    title: 'AI 问答',
+    title: 'AI 助手',
     desc: '基于 CopilotKit Agent，可调用前端工具直接读取并操作当前已打开的业务模块。',
     tags: ['前端工具', '可操作页面'],
   },

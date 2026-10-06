@@ -8,7 +8,7 @@
 - 低代码表单：拖拽设计器 + Schema 驱动渲染 + 字段联动与校验
 - 资金结算池：状态流转、金额统计、结算单录入
 - AI 助手：CopilotKit 前端工具可读取并操作业务模块；DeepSeek 直连模型流式对话
-- 工程规范：分层目录、集中路由、统一请求封装、国际化、一键启停脚本
+- 工程规范：分层目录、集中路由、统一请求封装、一键启停脚本
 
 ## 快速开始
 
@@ -34,7 +34,6 @@ src/
 ├─ services/    接口层（http / sse / deepseek）
 ├─ constants/   路由与导航常量
 ├─ config/      运行时配置出口（含主题唯一来源 theme.js）
-├─ locales/     国际化（业务文案 + antd/dayjs 语言）
 ├─ router/      路由表
 ├─ styles/      全局样式与变量
 └─ types/ utils/ 共享类型与工具
@@ -61,5 +60,4 @@ React 18 · TypeScript · CRA + craco · antd 4 · React Router 7 · CopilotKit 
 - [开发规范](./docs/03-conventions.md)
 - [架构说明](./docs/04-architecture.md)
 - [接口与服务](./docs/05-api-services.md)
-- [国际化](./docs/06-i18n.md)
-- [部署](./docs/07-deploy.md)
+- [部署](./docs/06-deploy.md)

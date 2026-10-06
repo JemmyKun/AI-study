@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { useNavigate } from 'react-router-dom';
 import { useFrontendTool } from '@copilotkit/react-core/v2';
 import { AI_NAVIGABLE_ROUTES, settlePoolEditPath } from '../../constants';
-import { MOCK_SETTLE_ORDERS, getSettleOrderById } from '../../pages/settle-pool/mockData';
+import { matchesKeyword, settleOrderRepository } from '../../pages/settle-pool/repository';
 import { componentRegistry } from '../form';
 import { getFormDesignerBridge } from './formDesignerBridge';
 import { getModule, listModules } from './moduleRegistry';
@@ -82,15 +82,17 @@ const AppCopilotBridge: React.FC = () => {
     description: '统计结算池中各状态（待结算/已结算待分设/付残失败）的结算单数量与总金额',
     parameters: z.object({}),
     handler: () => {
+      const all = settleOrderRepository.snapshot();
       const stats: Record<string, { count: number; amount: number }> = {};
-      MOCK_SETTLE_ORDERS.forEach(o => {
+      let amount = 0;
+      all.forEach(o => {
         const s = stats[o.status] ?? { count: 0, amount: 0 };
         s.count += 1;
         s.amount += o.amount;
         stats[o.status] = s;
+        amount += o.amount;
       });
-      const total = MOCK_SETTLE_ORDERS.length;
-      const amount = MOCK_SETTLE_ORDERS.reduce((sum, o) => sum + o.amount, 0);
+      const total = all.length;
       return JSON.stringify({
         total,
         totalAmount: Number(amount.toFixed(2)),
@@ -117,14 +119,9 @@ const AppCopilotBridge: React.FC = () => {
       limit: z.number().int().min(1).max(50).optional().describe('返回条数，默认 10'),
     }),
     handler: async ({ status = 'ALL', keyword, limit = 10 }) => {
-      const kw = (keyword ?? '').trim().toLowerCase();
-      const matched = MOCK_SETTLE_ORDERS.filter(o => {
+      const matched = settleOrderRepository.snapshot().filter(o => {
         if (status !== 'ALL' && o.status !== status) return false;
-        if (!kw) return true;
-        return [o.settleNo, o.tradeNature, o.localName, o.counterName, o.currency]
-          .join(' ')
-          .toLowerCase()
-          .includes(kw);
+        return matchesKeyword(o, keyword ?? '');
       });
       return JSON.stringify({
         total: matched.length,
@@ -152,7 +149,8 @@ const AppCopilotBridge: React.FC = () => {
       id: z.string().describe('结算单 id，来自 searchSettleOrders 返回值'),
     }),
     handler: async ({ id }) => {
-      const order = getSettleOrderById(id);
+      // 用同步快照：工具只做存在性校验，不必等 repository 的模拟延迟
+      const order = settleOrderRepository.snapshot().find(o => o.id === id) ?? null;
       if (!order) return `未找到 id 为 ${id} 的结算单，请先调用 searchSettleOrders。`;
       navigate(settlePoolEditPath(id));
       return `已打开结算单 ${order.settleNo} 的编辑页。`;

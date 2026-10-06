@@ -13,7 +13,8 @@ import {
   LoadingOutlined,
   RedoOutlined,
 } from '@ant-design/icons';
-import { useLocale } from '../../locales';
+import FileIcon from './FileIcon';
+import { formatFileSize, kindOf } from './attachments';
 import { ChatMessage } from './types';
 
 /**
@@ -77,7 +78,6 @@ interface MessageItemProps {
 
 function CodeBlock({ className, children }: { className?: string; children?: React.ReactNode }) {
   const [copied, setCopied] = useState(false);
-  const { t } = useLocale();
   const lang = /language-(\w+)/.exec(className || '')?.[1];
   const code = String(children).replace(/\n$/, '');
 
@@ -101,7 +101,7 @@ function CodeBlock({ className, children }: { className?: string; children?: Rea
       <div className="ds-code-bar">
         <span className="ds-code-lang">{lang || 'code'}</span>
         <button type="button" className="ds-code-copy" onClick={copy}>
-          {copied ? t('deepseek.action.copied') : t('deepseek.action.copy')}
+          {copied ? '已复制' : '复制'}
         </button>
       </div>
       <SyntaxHighlighter
@@ -119,14 +119,13 @@ function CodeBlock({ className, children }: { className?: string; children?: Rea
 /** R1 模型的思维链：思考中显示用时跳动，完成后默认折叠 */
 function ReasoningBlock({ text, active, thoughtMs }: { text: string; active: boolean; thoughtMs?: number }) {
   const [open, setOpen] = useState(false);
-  const { t } = useLocale();
   const seconds = Math.max(1, Math.round((thoughtMs ?? 0) / 1000));
 
   return (
     <div className={`ds-reasoning ${open || active ? 'is-open' : ''}`}>
       <button type="button" className="ds-reasoning-head" onClick={() => setOpen(v => !v)}>
         {active ? <LoadingOutlined spin /> : <CheckOutlined />}
-        {active ? t('deepseek.thinking.active') : t('deepseek.thinking.done', { seconds: String(seconds) })}
+        {active ? '正在思考…' : `已思考（用时 ${seconds} 秒）`}
         <span className={`ds-reasoning-arrow ${open ? 'is-open' : ''}`}>▾</span>
       </button>
       {(open || active) && <pre className="ds-reasoning-body">{text}</pre>}
@@ -164,7 +163,6 @@ const MessageItem: React.FC<MessageItemProps> = ({
   canRegenerate,
   onRegenerate,
 }) => {
-  const { t } = useLocale();
   const isUser = message.role === 'user';
   const [copied, setCopied] = useState(false);
   const [vote, setVote] = useState<'up' | 'down' | null>(null);
@@ -187,22 +185,32 @@ const MessageItem: React.FC<MessageItemProps> = ({
             type="button"
             className="ds-user-copy"
             onClick={copyAll}
-            title={t('deepseek.action.copyTip')}
+            title="复制全文"
           >
             {copied ? <CheckOutlined /> : <CopyOutlined />}
           </button>
           <div className="ds-bubble ds-bubble-user">
             {message.content && <p className="ds-text">{message.content}</p>}
-            {message.images && message.images.length > 0 && (
-              <div className="ds-msg-images">
-                {message.images.map((src, i) => (
-                  <img
-                    key={i}
-                    src={src}
-                    alt={t('deepseek.attach.alt', { index: String(i + 1) })}
-                    onClick={() => setPreview(src)}
-                  />
-                ))}
+            {message.attachments && message.attachments.length > 0 && (
+              <div className="ds-msg-attach">
+                {message.attachments.map((a, i) => {
+                  // 图片出缩略图（可点击放大），其余类型出文件卡片
+                  const url = a.previewUrl ?? '';
+                  return url ? (
+                    <img
+                      key={a.id}
+                      src={url}
+                      alt={`附件 ${i + 1}`}
+                      onClick={() => setPreview(url)}
+                    />
+                  ) : (
+                    <span key={a.id} className="ds-file-chip" title={a.name}>
+                      <FileIcon kind={kindOf(a.mime, a.name)} />
+                      <span className="ds-file-name">{a.name}</span>
+                      <span className="ds-file-size">{formatFileSize(a.size)}</span>
+                    </span>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -210,7 +218,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
 
         {/* 点击缩略图放大查看 */}
         {preview && (
-          <div className="ds-lightbox" onClick={() => setPreview(null)} title={t('deepseek.preview.close')}>
+          <div className="ds-lightbox" onClick={() => setPreview(null)} title="点击关闭预览">
             <img src={preview} alt="preview" />
           </div>
         )}
@@ -252,7 +260,9 @@ const MessageItem: React.FC<MessageItemProps> = ({
         {isStreaming && <span className="ds-cursor" />}
       </div>
 
-      {message.failed && <p className="ds-failed">{t('deepseek.failed')}</p>}
+      {message.failed && (
+        <p className="ds-failed">生成失败，请检查后端代理与密钥配置后重试。</p>
+      )}
 
       {!isStreaming && message.content && (
         <div className="ds-actions">
@@ -260,7 +270,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
             type="button"
             className={`ds-action-btn ${copied ? 'is-done' : ''}`}
             onClick={copyAll}
-            title={t('deepseek.action.copyTip')}
+            title="复制全文"
           >
             {copied ? <CheckOutlined /> : <CopyOutlined />}
           </button>
@@ -269,7 +279,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
               type="button"
               className="ds-action-btn"
               onClick={onRegenerate}
-              title={t('deepseek.regenerateTip')}
+              title="重新生成最后一条回复"
             >
               <RedoOutlined />
             </button>
@@ -278,7 +288,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
             type="button"
             className={`ds-action-btn ${vote === 'up' ? 'is-active' : ''}`}
             onClick={() => setVote(v => (v === 'up' ? null : 'up'))}
-            title={t('deepseek.action.likeTip')}
+            title="赞"
           >
             <LikeOutlined />
           </button>
@@ -286,7 +296,7 @@ const MessageItem: React.FC<MessageItemProps> = ({
             type="button"
             className={`ds-action-btn ${vote === 'down' ? 'is-active' : ''}`}
             onClick={() => setVote(v => (v === 'down' ? null : 'down'))}
-            title={t('deepseek.action.dislikeTip')}
+            title="踩"
           >
             <DislikeOutlined />
           </button>
@@ -297,4 +307,10 @@ const MessageItem: React.FC<MessageItemProps> = ({
   );
 };
 
-export default MessageItem;
+/**
+ * 流式输出期间父组件每收到一帧都会重渲染，
+ * memo 让「内容没变的消息」直接跳过重渲染——Markdown 解析 + 代码高亮的开销不小。
+ * 生效前提：onRegenerate 由 useCallback 保证引用稳定，
+ * 且 messages 更新时只有被改动的那条是新对象（useDeepSeekChat 就是这么更新的）。
+ */
+export default React.memo(MessageItem);

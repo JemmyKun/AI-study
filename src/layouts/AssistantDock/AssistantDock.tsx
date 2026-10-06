@@ -1,7 +1,6 @@
 import React from 'react';
 import { Button, Tooltip } from 'antd';
 import { CloseOutlined, RobotOutlined } from '@ant-design/icons';
-import { useLocale } from '../../locales';
 
 export interface AssistantDockProps {
   open: boolean;
@@ -10,8 +9,7 @@ export interface AssistantDockProps {
 
 /** 右下角悬浮助手开关：全站统一入口，完整对话页会自动隐藏 */
 const AssistantDock: React.FC<AssistantDockProps> = ({ open, onToggle }) => {
-  const { t } = useLocale();
-  const label = open ? t('assistant.close') : t('assistant.open');
+  const label = open ? '隐藏 AI 助手' : '打开 AI 助手';
 
   return (
     <Tooltip placement="left" title={label} mouseEnterDelay={0.2}>

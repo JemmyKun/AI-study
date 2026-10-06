@@ -5,7 +5,6 @@ import { FULL_PAGE_CHAT_ROUTES } from '../../constants';
 import AppCopilotBridge from '../../features/copilot/AppCopilotBridge';
 import { COPILOT_INSTRUCTIONS, COPILOT_LABELS } from '../../features/copilot/labels';
 import '../../features/copilot/copilot-sidebar.css';
-import { useLocale } from '../../locales';
 import { AppRouter } from '../../router';
 import AppNav from '../AppNav/AppNav';
 import AssistantDock from '../AssistantDock/AssistantDock';
@@ -22,7 +21,6 @@ const ASSISTANT_SIDEBAR_WIDTH = 560;
  */
 const AppLayout: React.FC = () => {
   const { pathname } = useLocation();
-  const { locale } = useLocale();
   const [assistantOpen, setAssistantOpen] = useState(false);
 
   // 完整对话页自带会话区，隐藏悬浮开关并收起侧边栏，避免两套对话并存
@@ -42,8 +40,8 @@ const AppLayout: React.FC = () => {
         onOpenChange={setAssistantOpen}
         toggleButton={NoToggleButton}
         width={ASSISTANT_SIDEBAR_WIDTH}
-        instructions={COPILOT_INSTRUCTIONS[locale]}
-        labels={COPILOT_LABELS[locale]}
+        instructions={COPILOT_INSTRUCTIONS}
+        labels={COPILOT_LABELS}
       />
       {!hideAssistant && (
         <AssistantDock open={assistantOpen} onToggle={() => setAssistantOpen(v => !v)} />

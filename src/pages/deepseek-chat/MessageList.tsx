@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 import { DownOutlined } from '@ant-design/icons';
-import { useLocale } from '../../locales';
 import MessageItem from './MessageItem';
 import { ChatMessage, ServiceStatus } from './types';
 
@@ -11,8 +10,6 @@ export const ChatNotice: React.FC<{
   onDismissError: () => void;
   onRetryStatus: () => void;
 }> = ({ status, error, onDismissError, onRetryStatus }) => {
-  const { t } = useLocale();
-
   if (error) {
     return (
       <div className="ds-notice ds-notice-error">
@@ -22,7 +19,7 @@ export const ChatNotice: React.FC<{
           type="button"
           className="ds-notice-close"
           onClick={onDismissError}
-          title={t('deepseek.notice.close')}
+          title="关闭"
         >
           ×
         </button>
@@ -33,7 +30,9 @@ export const ChatNotice: React.FC<{
     return (
       <div className="ds-notice ds-notice-warn">
         <span className="ds-notice-icon">🔑</span>
-        <span className="ds-notice-text">{t('deepseek.notice.unconfigured')}</span>
+        <span className="ds-notice-text">
+          后端未检测到模型密钥，请在 .env 中配置 DEEPSEEK_API_KEY 后重启（npm run launch）。
+        </span>
       </div>
     );
   }
@@ -41,9 +40,9 @@ export const ChatNotice: React.FC<{
     return (
       <div className="ds-notice ds-notice-warn">
         <span className="ds-notice-icon">🔌</span>
-        <span className="ds-notice-text">{t('deepseek.notice.offline')}</span>
+        <span className="ds-notice-text">后端代理未连接，请启动服务后</span>
         <button type="button" className="ds-notice-link" onClick={onRetryStatus}>
-          {t('common.retry')}
+          重试
         </button>
       </div>
     );
@@ -74,7 +73,6 @@ const MessageList: React.FC<MessageListProps> = ({
   atBottom,
   onScrollToBottom,
 }) => {
-  const { t } = useLocale();
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -109,7 +107,7 @@ const MessageList: React.FC<MessageListProps> = ({
             type="button"
             className="ds-to-bottom"
             onClick={onScrollToBottom}
-            title={t('deepseek.toBottom')}
+            title="回到底部"
           >
             <DownOutlined />
           </button>

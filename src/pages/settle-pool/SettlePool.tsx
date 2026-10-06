@@ -27,7 +27,14 @@ import { useNavigate } from 'react-router-dom';
 import { ColumnsType } from 'antd/es/table';
 import { SettleOrder, SettleStatus } from '../../types/settle-pool';
 import { registerModule } from '../../features/copilot/moduleRegistry';
-import { MOCK_SETTLE_ORDERS, querySettleOrders } from './mockData';
+import {
+  CHANNEL_OPTIONS,
+  CURRENCY_OPTIONS,
+  LOCAL_ACCOUNT_OPTIONS,
+  SETTLE_TYPE_OPTIONS,
+  STATUS_OPTIONS,
+} from './constants';
+import { settleOrderRepository } from './repository';
 import './SettlePool.css';
 
 /** 状态 → 标签颜色 */
@@ -68,28 +75,8 @@ const MORE_FIELDS = [
   { name: 'settleType5', label: '银行返回详情', placeholder: '请选择事由详情' },
 ] as const;
 
-/** 结算类型选项 */
-const SETTLE_TYPE_OPTIONS = ['F1-境外-支付', 'F2-境内-收款', 'F3-境外-退款'];
-/** 交易属性/渠道选项 */
-const CHANNEL_OPTIONS = ['SWIFT', '银企直连'];
-/** 收支标志/状态选项 */
-const STATUS_OPTIONS: SettleStatus[] = [
-  SettleStatus.PendingSplit,
-  SettleStatus.ToBeSettled,
-  SettleStatus.ResidualPayFailed,
-];
-/** 币种选项 */
-const CURRENCY_OPTIONS = [
-  'HKD-港元', 'USD-美元', 'EUR-欧元', 'SGD-新加坡元', 'THB-泰铢',
-  'GBP-英镑', 'JPY-日元', 'IDR-印度尼西亚卢比',
-];
-/** 本方账户选项 */
-const LOCAL_ACCOUNT_OPTIONS = [
-  'B3T1012345678', 'B3T10880000001234', 'B3T10880000012324',
-  'HU417116301111110...', 'DE125001000001234...',
-];
-
-/** 筛选字段 → 下拉选项：用查表代替多层三元，新增字段只改这里 */
+/** 筛选字段 → 下拉选项：用查表代替多层三元，新增字段只改这里。
+ *  选项本身来自 ./constants，与编辑页、种子数据同源。 */
 const PRIMARY_FIELD_OPTIONS: Record<string, readonly string[]> = {
   settleType: SETTLE_TYPE_OPTIONS,
   channel: CHANNEL_OPTIONS,
@@ -111,33 +98,59 @@ const SettlePool: React.FC = () => {
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
   const [list, setList] = useState<SettleOrder[]>([]);
   const [activeTab, setActiveTab] = useState<string>('ALL');
+  /** 数据源版本号：任何写操作后自增，驱动页签计数等派生数据刷新 */
+  const [dataVersion, setDataVersion] = useState(0);
+  /** 请求序号：只认最后一次请求的结果，避免旧响应覆盖新结果 */
+  const reqIdRef = useRef(0);
+  /** 组件是否仍挂载（StrictMode 双挂载时在 effect 里重置） */
+  const aliveRef = useRef(true);
+  /** 最近一次查询参数：删除/还原后按它重新拉取，
+   *  这样删除回调不必依赖 pagination state，columns 的 useMemo 才能真正稳定 */
+  const lastQueryRef = useRef({ current: 1, pageSize: 10, tab: 'ALL' });
   /** 表格可视区高度（用于列表沉底 + 内部滚动） */
   const tableWrapRef = useRef<HTMLDivElement>(null);
   const [tableBodyHeight, setTableBodyHeight] = useState<number>(360);
 
-  /** 执行查询（页签 + 筛选 + 分页） */
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => {
+      aliveRef.current = false;
+    };
+  }, []);
+
+  /**
+   * 执行查询（页签 + 筛选 + 分页）。
+   * 两处防护：reqIdRef 丢弃过期响应（连点查询时旧结果不再覆盖新结果），
+   * aliveRef 保证卸载后不再 setState（原来用裸 setTimeout，卸载后仍会写状态）。
+   */
   const fetchData = useCallback(
-    (current: number, pageSize: number, tab: string) => {
+    async (current: number, pageSize: number, tab: string) => {
+      const reqId = ++reqIdRef.current;
+      lastQueryRef.current = { current, pageSize, tab };
       setLoading(true);
-      const values = form.getFieldsValue();
-      // 模拟网络延迟
-      setTimeout(() => {
-        const { list: rows, total } = querySettleOrders({
+      try {
+        const page = await settleOrderRepository.query({
           current,
           pageSize,
-          filters: values,
+          filters: form.getFieldsValue(),
           statusTab: tab,
         });
-        setList(rows);
-        setPagination({ current, pageSize, total });
-        setLoading(false);
-      }, 300);
+        if (!aliveRef.current || reqId !== reqIdRef.current) return;
+        setList(page.list);
+        setPagination({ current, pageSize, total: page.total });
+        setDataVersion(v => v + 1);
+      } catch {
+        if (!aliveRef.current || reqId !== reqIdRef.current) return;
+        message.error('查询失败，请重试');
+      } finally {
+        if (aliveRef.current && reqId === reqIdRef.current) setLoading(false);
+      }
     },
     [form],
   );
 
   useEffect(() => {
-    fetchData(1, 10, 'ALL');
+    void fetchData(1, 10, 'ALL');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -160,7 +173,7 @@ const SettlePool: React.FC = () => {
           const { activeTab: tab, total, list: rows } = snapshotRef.current;
           const counts: Record<string, number> = {};
           let amountSum = 0;
-          MOCK_SETTLE_ORDERS.forEach(o => {
+          settleOrderRepository.snapshot().forEach(o => {
             counts[o.status] = (counts[o.status] ?? 0) + 1;
           });
           rows.forEach(o => {
@@ -201,45 +214,62 @@ const SettlePool: React.FC = () => {
   }, []);
 
   /** 查询 */
-  const handleSearch = () => fetchData(1, pagination.pageSize, activeTab);
-  /** 重置 */
+  const handleSearch = () => void fetchData(1, lastQueryRef.current.pageSize, activeTab);
+  /** 重置查询条件 */
   const handleReset = () => {
     form.resetFields();
-    fetchData(1, pagination.pageSize, activeTab);
+    void fetchData(1, lastQueryRef.current.pageSize, activeTab);
     message.info('已重置查询条件');
   };
   /** 切换页签 */
   const handleTabChange = (key: string) => {
     setActiveTab(key);
     setSelectedRowKeys([]);
-    fetchData(1, pagination.pageSize, key);
+    void fetchData(1, lastQueryRef.current.pageSize, key);
   };
 
-  /** 删除（仅前端演示） */
-  const handleDelete = (record: SettleOrder) => {
-    const idx = MOCK_SETTLE_ORDERS.findIndex((o) => o.id === record.id);
-    if (idx >= 0) MOCK_SETTLE_ORDERS.splice(idx, 1);
-    message.success(`已删除结算单 ${record.settleNo}`);
-    fetchData(pagination.current, pagination.pageSize, activeTab);
-  };
+  /** 删除单条 */
+  const handleDelete = useCallback(
+    async (record: SettleOrder) => {
+      const removed = await settleOrderRepository.remove([record.id]);
+      if (removed === 0) return;
+      message.success(`已删除结算单 ${record.settleNo}`);
+      setSelectedRowKeys(keys => keys.filter(k => k !== record.id));
+      const { current, pageSize, tab } = lastQueryRef.current;
+      void fetchData(current, pageSize, tab);
+    },
+    [fetchData],
+  );
 
-  const handleBatchDelete = () => {
-    for (let i = MOCK_SETTLE_ORDERS.length - 1; i >= 0; i--) {
-      if (selectedRowKeys.includes(MOCK_SETTLE_ORDERS[i].id)) MOCK_SETTLE_ORDERS.splice(i, 1);
-    }
-    message.success(`已批量删除 ${selectedRowKeys.length} 条结算单`);
+  /** 批量删除 */
+  const handleBatchDelete = async () => {
+    const removed = await settleOrderRepository.remove(selectedRowKeys.map(String));
+    message.success(`已批量删除 ${removed} 条结算单`);
     setSelectedRowKeys([]);
-    fetchData(pagination.current, pagination.pageSize, activeTab);
+    const { current, pageSize, tab } = lastQueryRef.current;
+    void fetchData(current, pageSize, tab);
   };
 
-  /** 各页签数量（基于当前数据源统计） */
+  /** 恢复初始演示数据：演示过程中删多了可以一键还原 */
+  const handleResetData = async () => {
+    await settleOrderRepository.reset();
+    message.success('已恢复初始演示数据');
+    setSelectedRowKeys([]);
+    void fetchData(1, lastQueryRef.current.pageSize, 'ALL');
+  };
+
+  /** 各页签数量：基于数据源实时统计，dataVersion 变化即重算 */
   const tabCounts = useMemo(() => {
-    const counts: Record<string, number> = { ALL: MOCK_SETTLE_ORDERS.length };
-    MOCK_SETTLE_ORDERS.forEach((o) => {
+    // dataVersion 是「数据源已变更」的信号：repository 是外部可变源，
+    // lint 无法感知这种依赖，这里显式引用一次，避免缓存永不刷新。
+    void dataVersion;
+    const all = settleOrderRepository.snapshot();
+    const counts: Record<string, number> = { ALL: all.length };
+    all.forEach((o) => {
       counts[o.status] = (counts[o.status] ?? 0) + 1;
     });
     return counts;
-  }, []);
+  }, [dataVersion]);
 
   const columns: ColumnsType<SettleOrder> = useMemo(
     () => [
@@ -299,8 +329,7 @@ const SettlePool: React.FC = () => {
         ),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [pagination],
+    [navigate, handleDelete],
   );
 
   /** 一行固定放 4 个查询条件（24 / 4 = 6） */
@@ -336,11 +365,27 @@ const SettlePool: React.FC = () => {
     </Col>
   );
 
+  const handleMoreMenuClick = ({ key }: { key: string }) => {
+    if (key === 'resetDemoData') {
+      Modal.confirm({
+        title: '恢复初始演示数据？',
+        content: '当前所有新增、编辑与删除都会被丢弃，还原为初始的 57 条结算单。',
+        okText: '恢复',
+        cancelText: '取消',
+        onOk: handleResetData,
+      });
+      return;
+    }
+    message.info(key);
+  };
+
   const moreMenu = (
-    <Menu onClick={({ key }) => message.info(key)}>
+    <Menu onClick={handleMoreMenuClick}>
       <Menu.Item key="导出结算单">导出结算单</Menu.Item>
       <Menu.Item key="批量分设">批量分设</Menu.Item>
       <Menu.Item key="结算冲正">结算冲正</Menu.Item>
+      <Menu.Divider />
+      <Menu.Item key="resetDemoData">恢复初始演示数据</Menu.Item>
     </Menu>
   );
 
@@ -460,7 +505,7 @@ const SettlePool: React.FC = () => {
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (t, range) => `第 ${range[0]}-${range[1]} 条 / 共 ${t} 条`,
-            onChange: (current, pageSize) => fetchData(current, pageSize, activeTab),
+            onChange: (current, pageSize) => void fetchData(current, pageSize, activeTab),
           }}
         />
       </div>

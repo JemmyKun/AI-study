@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Button,
@@ -14,7 +14,15 @@ import {
 } from 'antd';
 import { ArrowLeftOutlined, SaveOutlined } from '@ant-design/icons';
 import { SettleOrder, SettleStatus } from '../../types/settle-pool';
-import { generateSettleNo, getSettleOrderById, nowString, saveSettleOrder } from './mockData';
+import {
+  CHANNEL_OPTIONS,
+  CURRENCY_OPTIONS,
+  SETTLE_TYPE_OPTIONS,
+  STATUS_OPTIONS,
+  TRADE_NATURE_OPTIONS,
+} from './constants';
+import { nowString } from './mockData';
+import { settleOrderRepository } from './repository';
 import './SettlePool.css';
 
 /** 表单字段类型 */
@@ -34,47 +42,59 @@ interface SettleFormValues {
   createdAt: string;
 }
 
-const SETTLE_TYPE_OPTIONS = ['F1-境外-支付', 'F2-境内-收款', 'F3-境外-退款'];
-const CHANNEL_OPTIONS: SettleOrder['channel'][] = ['SWIFT', '银企直连'];
-const STATUS_OPTIONS: SettleStatus[] = [
-  SettleStatus.ToBeSettled,
-  SettleStatus.PendingSplit,
-  SettleStatus.ResidualPayFailed,
-];
-const CURRENCY_OPTIONS = [
-  'HKD-港元', 'USD-美元', 'EUR-欧元', 'SGD-新加坡元', 'THB-泰铢',
-  'GBP-英镑', 'JPY-日元', 'IDR-印度尼西亚卢比', 'KRW-韩元', 'AUD-澳元',
-];
-const TRADE_NATURE_OPTIONS = [
-  '货款', '服务费', '市场推广费', '模具开发费', '保险赔付', '国际运费',
-  '劳务费', '技术咨询费', '设备采购款', '样品费', '关税', '仓储费',
-];
+/** 新增模式的默认值；编号由 repository 生成，避免与已有数据撞号 */
+function buildDefaults() {
+  return {
+    settleNo: settleOrderRepository.nextSettleNo(),
+    status: SettleStatus.ToBeSettled,
+    createdAt: nowString(),
+    channel: 'SWIFT' as SettleOrder['channel'],
+  };
+}
 
 const SettleOrderEdit: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [form] = Form.useForm<SettleFormValues>();
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(Boolean(id));
+  const [record, setRecord] = useState<SettleOrder | null>(null);
+  /** 卸载标记 + 请求序号：避免组件卸载或切换 id 后旧响应写入状态 */
+  const aliveRef = useRef(true);
+  const reqIdRef = useRef(0);
 
   const isEdit = Boolean(id);
-  const record = useMemo(() => (id ? getSettleOrderById(id) : null), [id]);
 
   useEffect(() => {
-    if (isEdit && !record) {
-      message.error('未找到该结算单');
-      navigate('/settle-pool');
+    aliveRef.current = true;
+    return () => {
+      aliveRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const reqId = ++reqIdRef.current;
+    if (!id) {
+      setRecord(null);
+      form.setFieldsValue(buildDefaults());
       return;
     }
-    if (record) {
-      form.setFieldsValue(record);
-    } else {
-      form.setFieldsValue({
-        settleNo: generateSettleNo(),
-        status: SettleStatus.ToBeSettled,
-        createdAt: nowString(),
-        channel: 'SWIFT',
-      });
-    }
+    setLoading(true);
+    void (async () => {
+      try {
+        const found = await settleOrderRepository.getById(id);
+        if (!aliveRef.current || reqId !== reqIdRef.current) return;
+        if (!found) {
+          message.error('未找到该结算单');
+          navigate('/settle-pool');
+          return;
+        }
+        setRecord(found);
+        form.setFieldsValue(found);
+      } finally {
+        if (aliveRef.current && reqId === reqIdRef.current) setLoading(false);
+      }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -82,32 +102,29 @@ const SettleOrderEdit: React.FC = () => {
   const handleResetForm = () => {
     if (record) {
       form.setFieldsValue(record);
-    } else {
-      form.resetFields();
-      form.setFieldsValue({
-        settleNo: generateSettleNo(),
-        status: SettleStatus.ToBeSettled,
-        createdAt: nowString(),
-        channel: 'SWIFT',
-      });
+      return;
     }
+    form.resetFields();
+    form.setFieldsValue(buildDefaults());
   };
 
   const handleSubmit = async () => {
+    let values: SettleFormValues;
     try {
-      const values = await form.validateFields();
-      setSubmitting(true);
-      setTimeout(() => {
-        saveSettleOrder({
-          ...(record ? { id: record.id } : {}),
-          ...values,
-        });
-        setSubmitting(false);
-        message.success(isEdit ? '保存成功' : '新增成功');
-        navigate('/settle-pool');
-      }, 300);
+      values = await form.validateFields();
     } catch {
       message.warning('请检查表单必填项');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await settleOrderRepository.save({ ...(record ? { id: record.id } : {}), ...values });
+      message.success(isEdit ? '保存成功' : '新增成功');
+      navigate('/settle-pool');
+    } catch {
+      message.error('保存失败，请重试');
+    } finally {
+      if (aliveRef.current) setSubmitting(false);
     }
   };
 
@@ -115,6 +132,7 @@ const SettleOrderEdit: React.FC = () => {
     <div className="sp-edit-page">
       <Card
         className="sp-edit-card"
+        loading={loading}
         title={
           <div className="sp-edit-title">
             <Button

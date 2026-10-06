@@ -87,11 +87,76 @@
 }
 
 .ds-hero-title {
+  position: relative;
   margin: 0 0 28px;
   font-size: 2rem;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-align: center;
+}
+
+/*
+ * 圆形滤镜：一个独立圆元素跟随指针（不用 clip-path，避免圆被标题盒子裁掉），
+ * 圆内叠一份同样的文字并反白 → 深底白字突出当前汉字。
+ */
+.ds-hero-magnifier {
+  --lens-x: 0px;
+  --lens-y: 0px;
+  /* 半径按字号走：直径约 1.5 个字，能完整套住一个汉字 */
+  --lens-radius: 0.78em;
+  /* 跟随缓动：不做实时跟手，指针停下后圆才缓缓滑过去，更克制高级 */
+  --lens-follow: 0.4s cubic-bezier(0.33, 1, 0.68, 1);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--lens-radius) * 2);
+  height: calc(var(--lens-radius) * 2);
+  /* 用 transform 而不是 left/top：走合成层，缓动跟随不掉帧 */
+  transform: translate(
+    calc(var(--lens-x) - var(--lens-radius)),
+    calc(var(--lens-y) - var(--lens-radius))
+  );
+  transition: opacity 0.18s ease, transform var(--lens-follow);
+  will-change: transform;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #14161c;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ds-hero-title:hover .ds-hero-magnifier {
+  opacity: 1;
+}
+
+/*
+ * 圆内的文字副本：整体平移回标题坐标系，使其左上角与原文重合。
+ * 标题是收缩宽度（父级 align-items:center），副本用 max-content 得到同样宽度，
+ * 文字排版因此与原文逐字对齐。
+ */
+.ds-hero-lens-text {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: max-content;
+  /*
+   * 反向位移抵消圆的移动：圆滑动时，圆内文字相对标题始终不动。
+   * 与圆用同一条缓动曲线、同一帧更新，两者位移严格互为相反数，不会错位。
+   */
+  transform: translate(
+    calc(var(--lens-radius) - var(--lens-x)),
+    calc(var(--lens-radius) - var(--lens-y))
+  );
+  transition: transform var(--lens-follow);
+  color: #fff;
+}
+
+/* 系统开启"减少动效"时不做淡入与缓动跟随 */
+@media (prefers-reduced-motion: reduce) {
+  .ds-hero-magnifier,
+  .ds-hero-lens-text {
+    transition: none;
+  }
 }
 
 /* hero 里输入卡片收窄、去掉底部渐变 */
@@ -870,22 +935,76 @@
   background: rgba(20, 24, 36, 0.8);
 }
 
-.ds-attach-btn {
-  width: 26px;
-  height: 26px;
+/* 非图片附件：文件卡片（图片仍是 64×64 缩略图） */
+.ds-attach-item.is-file {
+  display: flex;
+  align-items: center;
+  width: auto;
+  max-width: 240px;
+  height: 44px;
+  padding: 0 22px 0 8px;
+  overflow: visible;
+}
+
+.ds-file-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.ds-file-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  border: 1px solid #e6eaf3;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: #eef2ff;
+  color: #4d6bfe;
+  font-size: 14px;
+}
+
+.ds-file-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ds-file-meta .ds-file-name {
+  max-width: 160px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 0.75rem;
+  color: #3d4a63;
+}
+
+.ds-file-meta .ds-file-sub {
+  font-size: 0.625rem;
+  color: #9aa4b8;
+}
+
+.ds-attach-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border: none;
   border-radius: 50%;
-  background: #fff;
+  background: transparent;
   color: #5a6478;
-  font-size: 12px;
+  font-size: 1rem;
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
+  transition: color 0.15s, background 0.15s;
 }
 
 .ds-attach-btn:hover:not(:disabled) {
   color: #4d6bfe;
-  border-color: #b9c6ff;
+  background: #f1f4fa;
 }
 
 .ds-attach-btn:disabled {
@@ -893,20 +1012,45 @@
   cursor: not-allowed;
 }
 
-/* 用户气泡内的图片 */
-.ds-msg-images {
+/* 用户气泡内的附件：图片出缩略图，其余类型出文件卡片 */
+.ds-msg-attach {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 8px;
 }
 
-.ds-msg-images img {
+.ds-msg-attach img {
   display: block;
   max-width: 240px;
   max-height: 220px;
   border-radius: 8px;
   cursor: zoom-in;
+}
+
+.ds-file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 260px;
+  padding: 6px 10px;
+  border: 1px solid rgba(77, 107, 254, 0.18);
+  border-radius: 8px;
+  background: rgba(77, 107, 254, 0.06);
+  color: #3d4a63;
+  font-size: 0.8125rem;
+}
+
+.ds-file-chip .ds-file-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ds-file-size {
+  flex-shrink: 0;
+  color: #8b93a7;
+  font-size: 0.6875rem;
 }
 
 /* 大图预览遮罩 */

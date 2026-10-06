@@ -1,4 +1,3 @@
-import type { MessageKey } from '../locales/messages/zh-CN';
 import { ROUTES } from './routes';
 
 /** 导航图标：只存标识，具体图标在 AppNav 内映射，常量层保持纯数据 */
@@ -11,29 +10,30 @@ export interface NavItem {
   path: string;
   group: NavGroup;
   icon: NavIconKey;
-  labelKey: MessageKey;
-  hintKey?: MessageKey;
+  label: string;
+  /** 鼠标悬停时的补充说明 */
+  hint?: string;
 }
 
 /** 全站导航的唯一配置源：新增页面只需在此追加 */
 export const NAV_ITEMS: NavItem[] = [
-  { path: ROUTES.HOME, group: 'business', icon: 'home', labelKey: 'nav.home' },
-  { path: ROUTES.FORM_BUILDER, group: 'business', icon: 'builder', labelKey: 'nav.formBuilder' },
-  { path: ROUTES.FORM_RENDERER, group: 'business', icon: 'renderer', labelKey: 'nav.formRenderer' },
-  { path: ROUTES.SETTLE_POOL, group: 'business', icon: 'wallet', labelKey: 'nav.settlePool' },
+  { path: ROUTES.HOME, group: 'business', icon: 'home', label: '首页' },
+  { path: ROUTES.FORM_BUILDER, group: 'business', icon: 'builder', label: '表单设计器' },
+  { path: ROUTES.FORM_RENDERER, group: 'business', icon: 'renderer', label: '表单渲染演示' },
+  { path: ROUTES.SETTLE_POOL, group: 'business', icon: 'wallet', label: '资金结算池' },
   {
     path: ROUTES.CHAT,
     group: 'ai',
     icon: 'chat',
-    labelKey: 'nav.chat',
-    hintKey: 'nav.hint.chat',
+    label: 'AI 助手',
+    hint: 'CopilotKit Agent，可操作业务模块',
   },
   {
     path: ROUTES.DEEPSEEK_CHAT,
     group: 'ai',
     icon: 'robot',
-    labelKey: 'nav.deepseekChat',
-    hintKey: 'nav.hint.deepseekChat',
+    label: 'DeepSeek 对话',
+    hint: '直连 DeepSeek 模型，纯对话',
   },
 ];
 
