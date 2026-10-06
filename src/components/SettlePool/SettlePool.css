@@ -1,0 +1,334 @@
+/* 页面：整屏 flex 布局，表格区占据剩余空间，分页沉底 */
+.sp-page {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 56px); /* 顶部导航栏 56px */
+  padding: 12px 16px 16px;
+  background: #f0f2f5;
+  box-sizing: border-box;
+  gap: 12px;
+}
+
+/* 顶部页签卡片 */
+.sp-tabs-card {
+  flex: none;
+  background: #fff;
+  border-radius: 4px;
+  padding: 0 16px;
+}
+
+.sp-tabs .ant-tabs-nav {
+  margin: 0;
+}
+
+.sp-tabs .ant-tabs-tab {
+  padding: 12px 8px;
+  font-size: 14px;
+}
+
+.sp-tab-count {
+  display: inline-block;
+  min-width: 18px;
+  margin-left: 6px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: #f0f2f5;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+  line-height: 18px;
+  text-align: center;
+}
+
+.sp-tabs .ant-tabs-tab-active .sp-tab-count {
+  background: #1890ff;
+  color: #fff;
+}
+
+/* 筛选区 */
+.sp-filter {
+  flex: none;
+  background: #fff;
+  border-radius: 4px;
+  padding: 16px 16px 8px;
+}
+
+.sp-filter .sp-form-item {
+  margin-bottom: 12px;
+}
+
+.sp-filter .sp-form-item .ant-form-item-label {
+  padding-bottom: 2px;
+}
+
+.sp-filter .sp-form-item .ant-form-item-label > label {
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.sp-filter .sp-form-item .ant-input,
+.sp-filter .sp-form-item .ant-select-selector {
+  font-size: 12px;
+}
+
+/* 筛选表单末尾操作栅格：占满当前行剩余空间，按钮贴最右侧 */
+.sp-filter-actions {
+  min-width: 220px;
+}
+
+.sp-filter-actions .sp-filter-actions-inner {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  height: 32px;
+}
+
+.sp-filter-actions .ant-form-item-control-input {
+  min-height: 32px;
+}
+
+/* 工具栏（表格上方） */
+.sp-toolbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 16px;
+  background: #fff;
+  border-radius: 4px;
+}
+
+.sp-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.sp-toolbar-total {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.sp-selected-tip {
+  color: #1890ff;
+  margin-right: 4px;
+}
+
+/* 表格容器：撑满剩余高度 */
+.sp-table-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 4px;
+  padding: 8px 0 0;
+  overflow: hidden;
+}
+
+.sp-table-wrap > .ant-table-wrapper {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sp-table-wrap .ant-spin-nested-loading,
+.sp-table-wrap .ant-spin-container {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sp-table-wrap .ant-table {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sp-table-wrap .ant-table-container {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 表头固定、表体滚动 */
+.sp-table-wrap .ant-table-header {
+  flex: none;
+  overflow: hidden !important;
+}
+
+.sp-table-wrap .ant-table-body {
+  flex: 1;
+  min-height: 0;
+}
+
+/* 表格样式优化 */
+.sp-table .ant-table-thead > tr > th {
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.85);
+  background: #fafafa;
+  white-space: nowrap;
+}
+
+.sp-table .ant-table-tbody > tr > td {
+  font-size: 13px;
+}
+
+.sp-table .ant-table-tbody > tr:hover > td {
+  background: #f5faff;
+}
+
+.sp-table .ant-table-cell-ellipsis {
+  white-space: nowrap;
+}
+
+/* 金额列：等宽数字更易读 */
+.sp-table .ant-table-tbody > tr > td:last-child {
+  color: rgba(0, 0, 0, 0.85);
+}
+
+/* 操作列：紧凑排布，保证按钮不被截断 */
+.sp-table .sp-col-action .ant-btn-sm {
+  height: 22px;
+  line-height: 22px;
+  padding: 0 6px;
+}
+
+.sp-table .sp-col-action .ant-space-item {
+  white-space: nowrap;
+}
+
+.sp-table .sp-link {
+  font-size: 13px;
+}
+
+/* 分页：贴底、留白、超出换行 */
+.sp-table .ant-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  row-gap: 8px;
+  margin: 12px 16px;
+  padding: 0;
+}
+
+.sp-table .ant-pagination-total-text {
+  margin-right: auto;
+}
+
+.sp-table .ant-pagination-options {
+  margin-left: 8px;
+}
+
+/* 固定列底色 */
+.sp-table .ant-table-cell-fix-right {
+  background: #fff;
+}
+
+/* 新增 / 编辑页 */
+.sp-edit-page {
+  display: flex;
+  padding: 16px;
+  height: calc(100vh - 56px); /* 顶部导航栏 56px */
+  background: #f0f2f5;
+  box-sizing: border-box;
+}
+
+/* 卡片铺满整个可视区域 */
+.sp-edit-card {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: 4px;
+}
+
+.sp-edit-card > .ant-card-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.sp-edit-title {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* 标题左侧的返回按钮 */
+.sp-edit-back {
+  margin-right: 8px;
+  padding: 0 8px;
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.sp-edit-back:hover {
+  color: #1890ff;
+  background: #f5f5f5;
+}
+
+/* 底部操作栏：右侧对齐 */
+.sp-edit-card > .ant-card-actions {
+  background: #fff;
+  border-top: 1px solid #f0f0f0;
+  padding: 12px 24px;
+}
+
+.sp-edit-card > .ant-card-actions > li {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: right;
+}
+
+.sp-edit-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sp-edit-form .ant-form-item {
+  margin-bottom: 16px;
+}
+
+.sp-edit-section {
+  margin: 8px 0 0;
+  padding-left: 8px;
+  border-left: 3px solid #1890ff;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+/* 详情弹窗 */
+.sp-detail {
+  max-height: 60vh;
+  overflow: auto;
+}
+
+.sp-detail-row {
+  display: flex;
+  padding: 6px 0;
+  font-size: 13px;
+  border-bottom: 1px dashed #f0f0f0;
+}
+
+.sp-detail-label {
+  flex: 0 0 110px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.sp-detail-value {
+  flex: 1;
+  color: rgba(0, 0, 0, 0.85);
+  word-break: break-all;
+}

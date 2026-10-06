@@ -1,0 +1,79 @@
+.app-nav {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  height: 56px;
+  line-height: 56px;
+  padding: 0 24px;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.app-nav-logo {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.85);
+  white-space: nowrap;
+  cursor: default;
+}
+
+.app-nav-logo-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-right: 8px;
+  border-radius: 6px;
+  background: #1890ff;
+  color: #fff;
+  font-size: 13px;
+}
+
+/* antd Header 默认 64px，这里压缩为 56px */
+.app-nav-menu {
+  flex: 1;
+  min-width: 0;
+  height: 56px;
+  line-height: 56px;
+  border-bottom: none;
+  background: transparent;
+}
+
+.app-nav-menu.ant-menu-horizontal > .ant-menu-item,
+.app-nav-menu.ant-menu-horizontal > .ant-menu-submenu {
+  top: 0;
+  margin-top: 0;
+  padding: 0 12px;
+}
+
+.app-nav-menu.ant-menu-horizontal > .ant-menu-item::after,
+.app-nav-menu.ant-menu-horizontal > .ant-menu-submenu::after {
+  bottom: 0;
+}
+
+/* 菜单项内的 Link 继承菜单文字颜色 */
+.app-nav-menu .ant-menu-item a {
+  color: inherit;
+}
+
+.app-nav-menu .ant-menu-item a:hover {
+  color: #1890ff;
+}
+
+@media (max-width: 768px) {
+  .app-nav {
+    gap: 12px;
+    padding: 0 12px;
+    overflow-x: auto;
+  }
+
+  .app-nav-logo {
+    font-size: 14px;
+  }
+}
